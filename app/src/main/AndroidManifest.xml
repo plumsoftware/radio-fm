@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
-        android:name=".RadioFmApplication"
+        android:name="ru.plumsoftware.radiofm.RadioFmApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -25,7 +25,7 @@
             android:value="false" />
 
         <activity
-            android:name=".MainActivity"
+            android:name="ru.plumsoftware.radiofm.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.RadioFM"
             android:configChanges="orientation|screenSize|keyboardHidden">

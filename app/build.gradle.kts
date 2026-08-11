@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.radiofm"
+    namespace = "ru.plumsoftware.radiofm"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.radiofm"
+        applicationId = "ru.plumsoftware.radiofm"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
