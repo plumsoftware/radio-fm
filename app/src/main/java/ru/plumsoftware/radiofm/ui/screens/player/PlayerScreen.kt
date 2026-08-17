@@ -94,9 +94,6 @@ fun PlayerScreen(
                             tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         )
                     }
-                    IconButton(onClick = { /* история прослушивания */ }) {
-                        Icon(Icons.Default.History, contentDescription = "История")
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
@@ -105,7 +102,7 @@ fun PlayerScreen(
         },
         containerColor = MaterialTheme.colorScheme.background,
         // Sticky-баннер закреплён внизу экрана и не перекрывает основной контент плеера.
-        bottomBar = { StickyBannerAd() },
+        bottomBar = { },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -207,6 +204,10 @@ fun PlayerScreen(
                     Icon(Icons.Default.SkipNext, contentDescription = "Следующая станция")
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            StickyBannerAd()
 
             Spacer(modifier = Modifier.height(24.dp))
         }

@@ -1,5 +1,6 @@
 package ru.plumsoftware.radiofm.data
 
+import ru.plumsoftware.radiofm.R
 import ru.plumsoftware.radiofm.model.RadioStation
 import ru.plumsoftware.radiofm.model.StationCategory
 import ru.plumsoftware.radiofm.ui.theme.StationPalette
@@ -26,7 +27,7 @@ object RadioStationsRepository {
             category = StationCategory.POP,
             streamUrl = "https://ep128.streamr.ru/ep128.mp3",
             accentColor = StationPalette[0],
-            iconRes = null,
+            iconRes = R.drawable.eplus,
         ),
         RadioStation(
             id = "russkoe_radio",
@@ -35,7 +36,7 @@ object RadioStationsRepository {
             category = StationCategory.POP,
             streamUrl = "https://rusradio.hostingradio.ru/rusradio-128.mp3",
             accentColor = StationPalette[1],
-            iconRes = null,
+            iconRes = R.drawable.rr,
         ),
         RadioStation(
             id = "avtoradio",
@@ -44,7 +45,7 @@ object RadioStationsRepository {
             category = StationCategory.TALK,
             streamUrl = "https://avtoradio.hostingradio.ru/avtoradio128.mp3",
             accentColor = StationPalette[2],
-            iconRes = null,
+            iconRes = R.drawable.ar,
         ),
         RadioStation(
             id = "dorognoe",
@@ -53,7 +54,7 @@ object RadioStationsRepository {
             category = StationCategory.POP,
             streamUrl = "https://dorognoe.hostingradio.ru/dorognoe96.aacp",
             accentColor = StationPalette[3],
-            iconRes = null,
+            iconRes = R.drawable.road,
         ),
         RadioStation(
             id = "retro_fm",
@@ -62,7 +63,7 @@ object RadioStationsRepository {
             category = StationCategory.RETRO,
             streamUrl = "https://retro.hostingradio.ru/retro128.mp3",
             accentColor = StationPalette[4],
-            iconRes = null,
+            iconRes = R.drawable.retro,
         ),
         RadioStation(
             id = "humor_fm",
@@ -71,7 +72,7 @@ object RadioStationsRepository {
             category = StationCategory.HUMOR,
             streamUrl = "https://umor.hostingradio.ru/umor128.mp3",
             accentColor = StationPalette[5],
-            iconRes = null,
+            iconRes = R.drawable.humor,
         ),
         RadioStation(
             id = "comedy_radio",
@@ -80,17 +81,17 @@ object RadioStationsRepository {
             category = StationCategory.HUMOR,
             streamUrl = "https://comedyradio.hostingradio.ru/comedyradio128.mp3",
             accentColor = StationPalette[6],
-            iconRes = null,
+            iconRes = R.drawable.comedy,
         ),
-        RadioStation(
-            id = "chanson",
-            name = "Радио Шансон",
-            genre = "Шансон",
-            category = StationCategory.CHANSON,
-            streamUrl = "https://chanson.hostingradio.ru/chanson-128.mp3",
-            accentColor = StationPalette[7],
-            iconRes = null,
-        ),
+//        RadioStation(
+//            id = "chanson",
+//            name = "Радио Шансон",
+//            genre = "Шансон",
+//            category = StationCategory.CHANSON,
+//            streamUrl = "https://chanson.hostingradio.ru/chanson-128.mp3",
+//            accentColor = StationPalette[7],
+//            iconRes = null,
+//        ),
         RadioStation(
             id = "nashe_radio",
             name = "Наше Радио",
@@ -98,7 +99,7 @@ object RadioStationsRepository {
             category = StationCategory.ROCK,
             streamUrl = "https://nashe1.hostingradio.ru/nashe-128.mp3",
             accentColor = StationPalette[0],
-            iconRes = null,
+            iconRes = R.drawable.nashe,
         ),
         RadioStation(
             id = "dfm",
@@ -116,7 +117,7 @@ object RadioStationsRepository {
             category = StationCategory.POP,
             streamUrl = "https://dacha.hostingradio.ru/dacha-128.mp3",
             accentColor = StationPalette[2],
-            iconRes = null,
+            iconRes = R.drawable.dacha,
         ),
         RadioStation(
             id = "hit_fm",
@@ -143,7 +144,7 @@ object RadioStationsRepository {
             category = StationCategory.NEWS,
             streamUrl = "https://icecast-vgtrk.cdnvideo.ru/vestifm_mp3_128kbps",
             accentColor = StationPalette[5],
-            iconRes = null,
+            iconRes = R.drawable.vesti,
         ),
         RadioStation(
             id = "radio_rossii",
@@ -152,7 +153,7 @@ object RadioStationsRepository {
             category = StationCategory.NEWS,
             streamUrl = "https://icecast-vgtrk.cdnvideo.ru/radiorossii_mp3_128kbps",
             accentColor = StationPalette[6],
-            iconRes = null,
+            iconRes = R.drawable.russia,
         ),
         RadioStation(
             id = "police_wave",
@@ -163,15 +164,15 @@ object RadioStationsRepository {
             accentColor = StationPalette[7],
             iconRes = null,
         ),
-        RadioStation(
-            id = "sport_fm",
-            name = "Спорт FM",
-            genre = "Спорт, Новости",
-            category = StationCategory.SPORT,
-            streamUrl = "https://sportfm.hostingradio.ru/sportfm128.mp3",
-            accentColor = StationPalette[0],
-            iconRes = null,
-        ),
+//        RadioStation(
+//            id = "sport_fm",
+//            name = "Спорт FM",
+//            genre = "Спорт, Новости",
+//            category = StationCategory.SPORT,
+//            streamUrl = "https://sportfm.hostingradio.ru/sportfm128.mp3",
+//            accentColor = StationPalette[0],
+//            iconRes = R.drawable.sport,
+//        ),
     )
 
     fun findById(id: String): RadioStation? = stations.firstOrNull { it.id == id }

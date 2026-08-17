@@ -1,5 +1,6 @@
 package ru.plumsoftware.radiofm.ui.components
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ import kotlin.math.roundToInt
  * возвращает тестовое объявление. Перед публикацией в сторе замените его на свой
  * реальный идентификатор рекламного места из кабинета Рекламной сети Яндекса.
  */
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun StickyBannerAd(
     modifier: Modifier = Modifier,
