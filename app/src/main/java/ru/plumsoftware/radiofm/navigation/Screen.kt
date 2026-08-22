@@ -7,4 +7,6 @@ sealed class Screen(val route: String) {
         const val ARG_STATION_ID = "stationId"
         fun routeFor(stationId: String) = "player/$stationId"
     }
+
+    data object Settings : Screen("settings")
 }

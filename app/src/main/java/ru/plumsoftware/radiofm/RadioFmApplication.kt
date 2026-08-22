@@ -3,6 +3,7 @@ package ru.plumsoftware.radiofm
 import android.app.Application
 import ru.plumsoftware.radiofm.player.RadioPlayerManager
 import com.yandex.mobile.ads.common.YandexAds
+import kotlin.getValue
 
 class RadioFmApplication : Application() {
 

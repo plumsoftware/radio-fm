@@ -18,6 +18,7 @@ import ru.plumsoftware.radiofm.data.FavoritesRepository
 import ru.plumsoftware.radiofm.player.RadioPlayerManager
 import ru.plumsoftware.radiofm.ui.screens.list.RadioListScreen
 import ru.plumsoftware.radiofm.ui.screens.player.PlayerScreen
+import ru.plumsoftware.radiofm.ui.screens.settings.SettingsScreen
 import ru.plumsoftware.radiofm.ui.theme.AppThemeMode
 
 @Composable
@@ -26,6 +27,7 @@ fun RadioFmNavGraph(
     favoritesRepository: FavoritesRepository,
     themeMode: AppThemeMode,
     onToggleTheme: () -> Unit,
+    onSetThemeMode: (AppThemeMode) -> Unit,
     navController: NavHostController = rememberNavController(),
 ) {
     NavHost(
@@ -43,9 +45,22 @@ fun RadioFmNavGraph(
                 },
                 themeMode = themeMode,
                 onToggleTheme = onToggleTheme,
+                onOpenSettings = { navController.navigate(Screen.Settings.route) },
                 viewModel = viewModel(
-                    factory = RadioListViewModelFactory(favoritesRepository),
+                    factory = RadioListViewModelFactory(favoritesRepository, radioPlayerManager),
                 ),
+            )
+        }
+
+        composable(
+            route = Screen.Settings.route,
+            enterTransition = { slideInHorizontally(tween(250)) { it } + fadeIn(tween(250)) },
+            popExitTransition = { slideOutHorizontally(tween(200)) { it } + fadeOut(tween(200)) },
+        ) {
+            SettingsScreen(
+                themeMode = themeMode,
+                onSetThemeMode = onSetThemeMode,
+                onBack = { navController.popBackStack() },
             )
         }
 

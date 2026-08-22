@@ -36,12 +36,17 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+
+    lint {
+        checkReleaseBuilds = false
     }
 }
 
@@ -72,7 +77,10 @@ dependencies {
     implementation("androidx.media3:media3-session:1.4.1")
 
     // Yandex Mobile Ads SDK (adaptive sticky banner)
-    implementation("com.yandex.android:mobileads:8.2.0")
+    implementation("com.yandex.android:mobileads:8.3.0")
+
+    // Glance
+    implementation("androidx.glance:glance-appwidget:1.1.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

@@ -15,4 +15,5 @@ enum class StationCategory(val displayName: String) {
     HUMOR("Юмор"),
     CHANSON("Шансон"),
     TALK("Разговорное"),
+    KIDS("Детское"),
 }

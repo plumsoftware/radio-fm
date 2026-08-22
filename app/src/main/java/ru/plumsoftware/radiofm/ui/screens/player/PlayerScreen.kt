@@ -50,6 +50,16 @@ import ru.plumsoftware.radiofm.player.PlaybackStatus
 import ru.plumsoftware.radiofm.player.RadioPlayerManager
 import ru.plumsoftware.radiofm.ui.components.StationAvatar
 import ru.plumsoftware.radiofm.ui.components.StickyBannerAd
+import androidx.compose.material3.Snackbar
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.isActive
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,8 +69,6 @@ fun PlayerScreen(
     favoritesRepository: FavoritesRepository,
     onBack: () -> Unit,
 ) {
-    // stationId меняется при переключении на соседнюю станцию (next/prev),
-    // ViewModel пересоздаётся для нового id.
     var currentStationId by remember(stationId) { mutableStateOf(stationId) }
 
     val viewModel: PlayerViewModel = viewModel(
@@ -70,6 +78,23 @@ fun PlayerScreen(
     val station = viewModel.station
     val playbackState by viewModel.playbackState.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+    val isPlaying = playbackState.status == PlaybackStatus.PLAYING
+
+    // Плавное вращение: пока играет — крутится, на паузе останавливается на текущем
+    // угле (не прыгает в 0) и продолжает с него же при возобновлении. 45°/с — один
+    // оборот за 8 секунд, неспеша.
+    var discAngle by remember { mutableStateOf(0f) }
+    LaunchedEffect(isPlaying) {
+        if (isPlaying) {
+            var lastFrameNanos = withFrameNanos { it }
+            while (isActive) {
+                val frameNanos = withFrameNanos { it }
+                val deltaSeconds = (frameNanos - lastFrameNanos) / 1_000_000_000f
+                lastFrameNanos = frameNanos
+                discAngle = (discAngle + deltaSeconds * 45f) % 360f
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -101,7 +126,6 @@ fun PlayerScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
-        // Sticky-баннер закреплён внизу экрана и не перекрывает основной контент плеера.
         bottomBar = { },
     ) { innerPadding ->
         Column(
@@ -111,36 +135,9 @@ fun PlayerScreen(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .clip(MaterialTheme.shapes.large)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                MaterialTheme.colorScheme.background,
-                            ),
-                        ),
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = when (playbackState.status) {
-                            PlaybackStatus.BUFFERING -> "Буферизация…"
-                            PlaybackStatus.PLAYING -> playbackState.nowPlayingTitle ?: (station?.genre ?: "")
-                            PlaybackStatus.ERROR -> "Не удалось загрузить поток"
-                            else -> station?.genre.orEmpty()
-                        },
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
+            // Диск и кнопки теперь сразу под шапкой — вверху, а не после огромного
+            // пустого блока (раньше туда попадал градиентный Box со статус-текстом).
+            Spacer(modifier = Modifier.height(32.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -164,6 +161,7 @@ fun PlayerScreen(
                             size = 180.dp,
                             shape = CircleShape,
                             iconRes = station.iconRes,
+                            modifier = Modifier.graphicsLayer { rotationZ = discAngle },
                         )
                     }
 
@@ -185,11 +183,7 @@ fun PlayerScreen(
                             .size(56.dp),
                     ) {
                         Icon(
-                            imageVector = if (playbackState.status == PlaybackStatus.PLAYING) {
-                                Icons.Default.Pause
-                            } else {
-                                Icons.Default.PlayArrow
-                            },
+                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = "Play/Pause",
                         )
                     }
@@ -205,7 +199,67 @@ fun PlayerScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            // Всё, что не влезло сверху, уходит сюда — диск с кнопками остаётся
+            // в верхней половине экрана, а снекбар с баннером прижаты книзу.
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Название станции + её теги под диском — это то, что раньше жило в
+            // градиентном Box'е и пропало вместе с ним.
+            Text(
+                text = station?.name.orEmpty(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                station?.genre
+                    ?.split(",")
+                    ?.map { it.trim() }
+                    ?.filter { it.isNotEmpty() }
+                    ?.forEach { tag ->
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                        ) {
+                            Text(
+                                text = tag,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            )
+                        }
+                    }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            AnimatedVisibility(
+                visible = playbackState.status == PlaybackStatus.BUFFERING ||
+                        playbackState.status == PlaybackStatus.ERROR,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                Column {
+                    Snackbar(
+                        modifier = Modifier.fillMaxWidth(),
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ) {
+                        Text(
+                            text = if (playbackState.status == PlaybackStatus.BUFFERING) {
+                                "Загрузка…"
+                            } else {
+                                "Не удалось загрузить поток"
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
 
             StickyBannerAd()
 

@@ -7,6 +7,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Без него на Android 13+ сервис всё равно будет играть в фоне, но само уведомление
+         система молча не покажет. Запрашивается в рантайме, см. MainActivity. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:name="ru.plumsoftware.radiofm.RadioFmApplication"
@@ -17,6 +21,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.RadioFM">
 
         <!-- Manual SDK init is used in RadioFmApplication, so disable automatic init -->
@@ -34,6 +39,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Единственный держатель ExoPlayer/MediaSession. exported=false: команды ему
+             отправляет только наш процесс (Activity, виджет), извне сервис недоступен. -->
+        <service
+            android:name="ru.plumsoftware.radiofm.player.RadioPlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Виджет на рабочий стол (Jetpack Glance). -->
+        <receiver
+            android:name="ru.plumsoftware.radiofm.widget.RadioWidgetReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/radio_widget_info" />
+        </receiver>
 
     </application>
 

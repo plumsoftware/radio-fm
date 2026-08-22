@@ -15,6 +15,7 @@ import com.yandex.mobile.ads.banner.BannerAdView
 import com.yandex.mobile.ads.common.AdRequest
 import com.yandex.mobile.ads.common.AdRequestError
 import com.yandex.mobile.ads.common.ImpressionData
+import ru.plumsoftware.radiofm.BuildConfig
 import kotlin.math.roundToInt
 
 /**
@@ -31,7 +32,7 @@ import kotlin.math.roundToInt
 @Composable
 fun StickyBannerAd(
     modifier: Modifier = Modifier,
-    adUnitId: String = "demo-banner-yandex",
+    adUnitId: String = if (BuildConfig.DEBUG) "demo-banner-yandex" else "R-M-19798655-1",
 ) {
     val density = LocalDensity.current
     // Запоминаем последнюю ширину, для которой уже была загружена реклама,
@@ -52,7 +53,7 @@ fun StickyBannerAd(
                             // Баннер успешно загружен и отображается.
                         }
 
-                        override fun onAdFailedToLoad(adRequestError: AdRequestError) {
+                        override fun onAdFailedToLoad(error: AdRequestError) {
                             // Загрузка не удалась — по рекомендации SDK не повторяем запрос
                             // автоматически из этого колбэка.
                         }

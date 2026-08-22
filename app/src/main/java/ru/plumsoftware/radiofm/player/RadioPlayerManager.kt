@@ -1,102 +1,51 @@
 package ru.plumsoftware.radiofm.player
 
 import android.content.Context
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.core.content.ContextCompat
 import ru.plumsoftware.radiofm.model.RadioStation
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Единственный на всё приложение менеджер воспроизведения интернет-радио на базе Media3/ExoPlayer.
+ * Фасад над [RadioPlaybackService], который используют экраны приложения и виджет.
  *
- * Живёт на уровне Application, поэтому воспроизведение не прерывается при повороте экрана
- * или переходе между экранами списка/плеера.
+ * Публичный API намеренно не изменился (play/togglePlayPause/stop/state/release), чтобы
+ * существующие ViewModel'и (RadioListViewModel, PlayerViewModel) не пришлось трогать.
+ * Изменилась только реализация: раньше здесь напрямую жил ExoPlayer, теперь все команды
+ * лишь пересылаются в foreground-сервис [RadioPlaybackService] — только он может надёжно
+ * играть поток в фоне и показывать несворачиваемое уведомление. Состояние ([state]) — это
+ * тот же самый StateFlow, который публикует сервис через [PlaybackStateHolder], поэтому
+ * Activity/ViewModel и виджет на рабочем столе всегда видят одинаковые данные.
  */
 class RadioPlayerManager(context: Context) {
 
     private val appContext = context.applicationContext
 
-    private val _state = MutableStateFlow(PlaybackState())
-    val state: StateFlow<PlaybackState> = _state.asStateFlow()
-
-    private var player: ExoPlayer? = null
-
-    private fun ensurePlayer(): ExoPlayer {
-        var p = player
-        if (p == null) {
-            p = ExoPlayer.Builder(appContext).build()
-            p.addListener(object : Player.Listener {
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    updateStatusFromPlayer()
-                }
-
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    updateStatusFromPlayer()
-                }
-
-                override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-                    val title = mediaMetadata.title?.toString() ?: mediaMetadata.artist?.toString()
-                    if (title != null) {
-                        _state.value = _state.value.copy(nowPlayingTitle = title)
-                    }
-                }
-
-                override fun onPlayerError(error: PlaybackException) {
-                    _state.value = _state.value.copy(status = PlaybackStatus.ERROR)
-                }
-            })
-            player = p
-        }
-        return p
-    }
-
-    private fun updateStatusFromPlayer() {
-        val p = player ?: return
-        val status = when {
-            p.playbackState == Player.STATE_BUFFERING -> PlaybackStatus.BUFFERING
-            p.isPlaying -> PlaybackStatus.PLAYING
-            p.playbackState == Player.STATE_READY && !p.isPlaying -> PlaybackStatus.PAUSED
-            p.playbackState == Player.STATE_IDLE -> _state.value.status
-            else -> _state.value.status
-        }
-        _state.value = _state.value.copy(status = status)
-    }
+    val state: StateFlow<PlaybackState> = PlaybackStateHolder.state
 
     fun play(station: RadioStation) {
-        val p = ensurePlayer()
-        if (_state.value.stationId != station.id) {
-            _state.value = PlaybackState(stationId = station.id, status = PlaybackStatus.BUFFERING)
-            p.setMediaItem(MediaItem.fromUri(station.streamUrl))
-            p.prepare()
-        }
-        p.playWhenReady = true
+        ContextCompat.startForegroundService(appContext, RadioPlaybackService.playIntent(appContext, station.id))
     }
 
     fun togglePlayPause(station: RadioStation) {
-        val p = player
-        if (p == null || _state.value.stationId != station.id) {
+        if (state.value.stationId != station.id) {
             play(station)
             return
         }
-        if (p.isPlaying) {
-            p.playWhenReady = false
-        } else {
-            p.playWhenReady = true
-        }
+        ContextCompat.startForegroundService(appContext, RadioPlaybackService.toggleIntent(appContext))
     }
 
     fun stop() {
-        player?.stop()
-        _state.value = _state.value.copy(status = PlaybackStatus.IDLE)
+        if (state.value.status == PlaybackStatus.IDLE) return
+        appContext.startService(RadioPlaybackService.stopIntent(appContext))
     }
 
-    fun release() {
-        player?.release()
-        player = null
-    }
+    /**
+     * Оставлен для совместимости со старыми вызовами (например, из `onCleared()` во
+     * ViewModel экрана плеера). Раньше он реально освобождал ExoPlayer при уходе с экрана —
+     * из-за этого радио замолкало при простом сворачивании плеера. Теперь жизненным циклом
+     * плеера управляет исключительно сервис, поэтому здесь намеренно ничего не делается:
+     * воспроизведение и уведомление должны продолжаться, пока пользователь явно не нажмёт
+     * "стоп" (см. [stop]).
+     */
+    fun release() = Unit
 }

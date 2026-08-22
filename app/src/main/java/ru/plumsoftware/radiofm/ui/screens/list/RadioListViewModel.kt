@@ -10,10 +10,16 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import ru.plumsoftware.radiofm.player.RadioPlayerManager
+import ru.plumsoftware.radiofm.player.PlaybackState
 
-class RadioListViewModel(private val favoritesRepository: FavoritesRepository) : ViewModel() {
+class RadioListViewModel(
+    private val favoritesRepository: FavoritesRepository,
+    private val radioPlayerManager: RadioPlayerManager
+) : ViewModel() {
 
     private val allStations = RadioStationsRepository.stations
 
@@ -22,6 +28,21 @@ class RadioListViewModel(private val favoritesRepository: FavoritesRepository) :
 
     private val _selectedFilter = MutableStateFlow<StationFilter>(StationFilter.All)
     val selectedFilter: StateFlow<StationFilter> = _selectedFilter.asStateFlow()
+
+    val playbackState: StateFlow<PlaybackState> = radioPlayerManager.state
+
+    val nowPlaying: StateFlow<RadioStation?> = radioPlayerManager.state
+        .map { it.stationId?.let(RadioStationsRepository::findById) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = radioPlayerManager.state.value.stationId
+                ?.let(RadioStationsRepository::findById),
+        )
+
+    fun toggleNowPlayingPause() {
+        nowPlaying.value?.let(radioPlayerManager::togglePlayPause)
+    }
 
     val favoriteIds: StateFlow<Set<String>> = favoritesRepository.favoriteIds.stateIn(
         scope = viewModelScope,

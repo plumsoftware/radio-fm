@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.dp
 import ru.plumsoftware.radiofm.model.RadioStation
 import ru.plumsoftware.radiofm.ui.components.StationAvatar
 import ru.plumsoftware.radiofm.ui.theme.AppThemeMode
+import ru.plumsoftware.radiofm.ui.components.MiniPlayerBar
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material.icons.filled.Settings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +53,7 @@ fun RadioListScreen(
     onStationClick: (RadioStation) -> Unit,
     themeMode: AppThemeMode,
     onToggleTheme: () -> Unit,
+    onOpenSettings: () -> Unit,
     viewModel: RadioListViewModel,
 ) {
     val query by viewModel.query.collectAsState()
@@ -70,18 +74,37 @@ fun RadioListScreen(
                     IconButton(onClick = onToggleTheme) {
                         Icon(
                             imageVector = when (themeMode) {
-                                AppThemeMode.LIGHT -> Icons.Default.LightMode
-                                AppThemeMode.DARK -> Icons.Default.DarkMode
                                 AppThemeMode.SYSTEM -> Icons.Default.SettingsBrightness
+                                AppThemeMode.LIGHT -> Icons.Default.DarkMode
+                                AppThemeMode.DARK -> Icons.Default.LightMode
                             },
-                            contentDescription = "Переключить тему",
+                            contentDescription = when (themeMode) {
+                                AppThemeMode.SYSTEM -> "Тема: как в системе"
+                                AppThemeMode.LIGHT -> "Переключить на тёмную тему"
+                                AppThemeMode.DARK -> "Переключить на светлую тему"
+                            },
                         )
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Настройки")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
             )
+        },
+        bottomBar = {
+            val nowPlaying by viewModel.nowPlaying.collectAsState()
+            val nowPlayingState by viewModel.playbackState.collectAsState()
+            nowPlaying?.let { station ->
+                MiniPlayerBar(
+                    station = station,
+                    playbackState = nowPlayingState,
+                    onClick = { onStationClick(station) },
+                    onTogglePlayPause = { viewModel.toggleNowPlayingPause() },
+                )
+            }
         },
         containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
@@ -90,7 +113,6 @@ fun RadioListScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            // 1. Поисковая строка
             OutlinedTextField(
                 value = query,
                 onValueChange = viewModel::onQueryChange,
@@ -109,7 +131,6 @@ fun RadioListScreen(
                 ),
             )
 
-            // 2. Чипы фильтрации: Все, Избранное, затем категории (Новости, Спорт, ...)
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -135,7 +156,6 @@ fun RadioListScreen(
                 }
             }
 
-            // 3. Сетка станций с учётом поиска и выбранного фильтра
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
