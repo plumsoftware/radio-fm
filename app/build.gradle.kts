@@ -11,8 +11,8 @@ android {
         applicationId = "ru.plumsoftware.radiofm"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
     }
 
     buildTypes {
@@ -77,6 +77,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.media3:media3-common:1.4.1")
     implementation("androidx.media3:media3-session:1.4.1")
+    implementation("androidx.media3:media3-exoplayer-hls:1.3.1")
 
     // Yandex Mobile Ads SDK (adaptive sticky banner)
     implementation("com.yandex.android:mobileads:8.3.0")
