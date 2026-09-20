@@ -25,6 +25,19 @@ android {
         }
     }
 
+    flavorDimensions += "store"
+
+    productFlavors {
+        create("rustore") {
+            dimension = "store"
+            buildConfigField("String", "BANNER_AD_UNIT_ID", "\"R-M-19798655-1\"")
+        }
+        create("appgallery") {
+            dimension = "store"
+            buildConfigField("String", "BANNER_AD_UNIT_ID", "\"R-M-20078413-1\"")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

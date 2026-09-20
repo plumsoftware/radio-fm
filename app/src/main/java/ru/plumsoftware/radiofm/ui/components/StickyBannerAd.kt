@@ -32,7 +32,7 @@ import kotlin.math.roundToInt
 @Composable
 fun StickyBannerAd(
     modifier: Modifier = Modifier,
-    adUnitId: String = if (BuildConfig.DEBUG) "demo-banner-yandex" else "R-M-19798655-1",
+    adUnitId: String = if (BuildConfig.DEBUG) "demo-banner-yandex" else BuildConfig.BANNER_AD_UNIT_ID,
 ) {
     val density = LocalDensity.current
     // Запоминаем последнюю ширину, для которой уже была загружена реклама,
