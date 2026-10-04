@@ -1,5 +1,6 @@
 package ru.plumsoftware.radiofm.ui.screens.player
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.plumsoftware.radiofm.PlayerViewModelFactory
@@ -49,7 +51,8 @@ import ru.plumsoftware.radiofm.data.FavoritesRepository
 import ru.plumsoftware.radiofm.player.PlaybackStatus
 import ru.plumsoftware.radiofm.player.RadioPlayerManager
 import ru.plumsoftware.radiofm.ui.components.StationAvatar
-import ru.plumsoftware.radiofm.ui.components.StickyBannerAd
+import ru.plumsoftware.radiofm.ui.components.findActivity
+import ru.plumsoftware.radiofm.ui.components.rememberCloseInterstitial
 import androidx.compose.material3.Snackbar
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.withFrameNanos
@@ -80,6 +83,39 @@ fun PlayerScreen(
     val isFavorite by viewModel.isFavorite.collectAsState()
     val isPlaying = playbackState.status == PlaybackStatus.PLAYING
 
+    // Межстраничная реклама на закрытие экрана. Состояние не привязано к станции,
+    // поэтому переключение «вперёд/назад» не вызывает повторную загрузку:
+    // одна загрузка при открытии экрана, один показ при закрытии.
+    val activity = LocalContext.current.findActivity()
+    val closeInterstitial = rememberCloseInterstitial()
+    val closeScreen = {
+        // Пока реклама на экране — радио стоит на паузе. Возобновляем после закрытия
+        // рекламы только если паузу поставили мы сами: если пользователь слушал — музыка
+        // вернётся, если радио и так молчало — оно не заиграет само.
+        var pausedForAd = false
+        closeInterstitial.showThen(
+            activity = activity,
+            onAdOpening = {
+                val status = viewModel.playbackState.value.status
+                if (status == PlaybackStatus.PLAYING || status == PlaybackStatus.BUFFERING) {
+                    pausedForAd = true
+                    viewModel.togglePlayPause()
+                }
+            },
+            onAdClosed = {
+                val status = viewModel.playbackState.value.status
+                val alreadyPlaying = status == PlaybackStatus.PLAYING || status == PlaybackStatus.BUFFERING
+                if (pausedForAd && !alreadyPlaying) {
+                    viewModel.togglePlayPause()
+                }
+            },
+            onFinished = onBack,
+        )
+    }
+
+    // Системная кнопка/жест «Назад» закрывает экран тем же путём, что и стрелка в шапке.
+    BackHandler(onBack = closeScreen)
+
     // Плавное вращение: пока играет — крутится, на паузе останавливается на текущем
     // угле (не прыгает в 0) и продолжает с него же при возобновлении. 45°/с — один
     // оборот за 8 секунд, неспеша.
@@ -107,7 +143,7 @@ fun PlayerScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = closeScreen) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
                     }
                 },
@@ -126,6 +162,7 @@ fun PlayerScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
+        // Баннера на этом экране больше нет — он переехал на экран списка станций.
         bottomBar = { },
     ) { innerPadding ->
         Column(
@@ -199,8 +236,6 @@ fun PlayerScreen(
                 }
             }
 
-            // Всё, что не влезло сверху, уходит сюда — диск с кнопками остаётся
-            // в верхней половине экрана, а снекбар с баннером прижаты книзу.
             Spacer(modifier = Modifier.height(16.dp))
 
             // Название станции + её теги под диском — это то, что раньше жило в
@@ -234,6 +269,8 @@ fun PlayerScreen(
                     }
             }
 
+            // Всё свободное место уходит сюда — диск с кнопками остаётся в верхней
+            // половине экрана, а снекбар прижат книзу.
             Spacer(modifier = Modifier.weight(1f))
 
             AnimatedVisibility(
@@ -260,10 +297,6 @@ fun PlayerScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }
-
-            StickyBannerAd()
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

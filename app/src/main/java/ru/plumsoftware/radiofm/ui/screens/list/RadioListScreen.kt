@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.plumsoftware.radiofm.model.RadioStation
 import ru.plumsoftware.radiofm.ui.components.StationAvatar
+import ru.plumsoftware.radiofm.ui.components.StickyBannerAd
 import ru.plumsoftware.radiofm.ui.theme.AppThemeMode
 import ru.plumsoftware.radiofm.ui.components.MiniPlayerBar
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -97,13 +99,30 @@ fun RadioListScreen(
         bottomBar = {
             val nowPlaying by viewModel.nowPlaying.collectAsState()
             val nowPlayingState by viewModel.playbackState.collectAsState()
-            nowPlaying?.let { station ->
-                MiniPlayerBar(
-                    station = station,
-                    playbackState = nowPlayingState,
-                    onClick = { onStationClick(station) },
-                    onTogglePlayPause = { viewModel.toggleNowPlayingPause() },
-                )
+
+            // Снизу вверх: мини-плеер с текущей станцией (если что-то играет), над ним баннер.
+            // Баннер стоит первым и вызывается безусловно, поэтому появление/исчезновение
+            // мини-плеера его не пересоздаёт и не перезагружает — он просто сдвигается.
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // Пока мини-плеера нет, баннер — самый нижний элемент экрана и сам
+                        // отступает от системной навигации. Когда плеер есть, низ занимает он.
+                        .then(if (nowPlaying == null) Modifier.navigationBarsPadding() else Modifier),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    StickyBannerAd()
+                }
+
+                nowPlaying?.let { station ->
+                    MiniPlayerBar(
+                        station = station,
+                        playbackState = nowPlayingState,
+                        onClick = { onStationClick(station) },
+                        onTogglePlayPause = { viewModel.toggleNowPlayingPause() },
+                    )
+                }
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
